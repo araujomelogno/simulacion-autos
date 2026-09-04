@@ -1,0 +1,1540 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AutoSim UY</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;900&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,700&display=swap">
+<!-- Firebase (compat v9) -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<style>
+:root{
+  --bg:#0E1521;--surf:#162032;--card:#1C2B3D;--card2:#223248;
+  --bdr:rgba(74,112,155,.22);--acc:#F08020;--acc-dim:rgba(240,128,32,.12);
+  --blue:#4AB0F0;--grn:#36C98E;--red:#E84040;--yel:#F5C842;
+  --txt:#E8E2D8;--txt2:#8AAABF;--txt3:#3A5568;
+  --f1:'Barlow Condensed',sans-serif;--f2:'DM Sans',sans-serif;
+  --r:8px;--rl:14px;
+}
+@media(prefers-color-scheme:light){
+  :root:not([data-theme=dark]){
+    --bg:#EEF2F7;--surf:#fff;--card:#F4F7FA;--card2:#E8EEF4;
+    --bdr:rgba(100,140,180,.2);--acc:#C46010;--acc-dim:rgba(196,96,16,.1);
+    --blue:#1A5A90;--grn:#1A7050;--red:#B02020;--yel:#806000;
+    --txt:#1A2530;--txt2:#4A6080;--txt3:#8AAABF;
+  }
+}
+:root[data-theme=dark]{
+  --bg:#0E1521;--surf:#162032;--card:#1C2B3D;--card2:#223248;
+  --bdr:rgba(74,112,155,.22);--acc:#F08020;--acc-dim:rgba(240,128,32,.12);
+  --blue:#4AB0F0;--grn:#36C98E;--red:#E84040;--yel:#F5C842;
+  --txt:#E8E2D8;--txt2:#8AAABF;--txt3:#3A5568;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--f2);background:var(--bg);color:var(--txt);min-height:100vh;font-size:15px;line-height:1.55}
+button{font-family:inherit;cursor:pointer;border:none;outline:none}
+input,select,textarea{font-family:inherit}
+a{color:var(--acc);text-decoration:none}
+
+/* Layout */
+.page{max-width:860px;margin:0 auto;padding:24px 16px}
+.page-sm{max-width:480px;margin:0 auto;padding:40px 16px}
+.row{display:flex;align-items:center;gap:8px}
+.col{display:flex;flex-direction:column;gap:8px}
+.flex1{flex:1}
+.g2{gap:8px}.g3{gap:12px}.g4{gap:16px}
+.mt2{margin-top:8px}.mt3{margin-top:12px}.mt4{margin-top:16px}.mt6{margin-top:24px}
+.mb2{margin-bottom:8px}.mb3{margin-bottom:12px}
+.tc{text-align:center}.tr{text-align:right}
+.muted{color:var(--txt2)}.small{font-size:12px}
+.mono{font-variant-numeric:tabular-nums}
+
+/* Cards */
+.card{background:var(--card);border:1px solid var(--bdr);border-radius:var(--rl);padding:20px}
+.card+.card{margin-top:12px}
+.card-t{font-family:var(--f1);font-size:13px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--txt2);margin-bottom:14px}
+
+/* Typography */
+h2{font-family:var(--f1);font-size:22px;font-weight:700;line-height:1.15}
+h3{font-family:var(--f1);font-size:16px;font-weight:600;color:var(--txt2);text-transform:uppercase;letter-spacing:.04em}
+.num{font-family:var(--f1);font-size:clamp(22px,5vw,36px);font-weight:700;line-height:1}
+.num-sm{font-family:var(--f1);font-size:20px;font-weight:700}
+.lbl{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--txt2);margin-top:3px}
+
+/* Buttons */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:10px 20px;border-radius:var(--r);font-size:14px;font-weight:600;transition:all .15s;white-space:nowrap}
+.btn-lg{padding:14px 28px;font-size:16px;border-radius:var(--rl)}
+.btn-sm{padding:6px 12px;font-size:12px}
+.btn-block{display:flex;width:100%}
+.btn-p{background:var(--acc);color:#fff}.btn-p:hover{filter:brightness(1.1)}
+.btn-p:disabled{opacity:.45;cursor:not-allowed;pointer-events:none}
+.btn-s{background:var(--surf);color:var(--txt);border:1px solid var(--bdr)}.btn-s:hover{background:var(--card2)}
+.btn-g{background:transparent;color:var(--txt);border:1px solid var(--bdr)}.btn-g:hover{background:var(--card)}
+.btn-d{background:var(--red);color:#fff}.btn-d:hover{filter:brightness(1.1)}
+.btn-grn{background:var(--grn);color:#fff}.btn-grn:hover{filter:brightness(1.1)}
+
+/* Forms */
+.fg{margin-bottom:14px}
+.fg label{display:block;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--txt2);margin-bottom:5px}
+.fc{width:100%;padding:9px 13px;background:var(--surf);border:1px solid var(--bdr);border-radius:var(--r);color:var(--txt);font-size:14px;transition:border-color .15s}
+.fc:focus{outline:none;border-color:var(--acc)}
+.fc::placeholder{color:var(--txt3)}
+select.fc{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%238AAABF' d='M6 8L0 0h12z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;padding-right:32px}
+input[type=range]{width:100%;accent-color:var(--acc);cursor:pointer}
+
+/* Tables */
+.tw{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{font-family:var(--f1);font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--txt2);padding:8px 10px;border-bottom:1px solid var(--bdr);white-space:nowrap}
+td{padding:10px 10px;border-bottom:1px solid var(--bdr);vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tbody tr:hover td{background:var(--card2)}
+
+/* Badges */
+.bdg{display:inline-flex;align-items:center;gap:3px;padding:3px 8px;border-radius:99px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.03em}
+.bdg-g{background:rgba(54,201,142,.15);color:var(--grn)}
+.bdg-r{background:rgba(232,64,64,.15);color:var(--red)}
+.bdg-a{background:var(--acc-dim);color:var(--acc)}
+.bdg-m{background:var(--card2);color:var(--txt2)}
+.bdg-b{background:rgba(74,176,240,.15);color:var(--blue)}
+
+/* Progress */
+.prog{height:6px;background:var(--card2);border-radius:99px;overflow:hidden}
+.prog-f{height:100%;border-radius:99px;transition:width .4s}
+
+/* Budget bar */
+.bget{background:var(--surf);border:1px solid var(--bdr);border-radius:var(--rl);padding:14px 18px;position:sticky;top:8px;z-index:20;margin-bottom:16px}
+.bget-row{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:7px}
+.bget-spent{font-family:var(--f1);font-size:26px;font-weight:700;color:var(--acc)}
+.bget-total{font-family:var(--f1);font-size:15px;color:var(--txt2)}
+.bget.over .bget-spent{color:var(--red)}
+.bget.over .prog-f{background:var(--red)}
+.bget.ok .prog-f{background:var(--grn)}
+
+/* Segment chips */
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{display:flex;align-items:center;gap:6px;padding:8px 14px;border-radius:99px;border:1.5px solid var(--bdr);cursor:pointer;font-size:13px;font-weight:500;transition:all .15s;user-select:none;background:var(--surf)}
+.chip.on{border-color:var(--acc);background:var(--acc-dim);color:var(--acc)}
+.chip:hover:not(.on){border-color:var(--txt2);background:var(--card)}
+
+/* KPI grid */
+.kpi-g{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px}
+.kpi{background:var(--card);border:1px solid var(--bdr);border-radius:var(--r);padding:14px 16px}
+.kpi.hi{border-color:rgba(240,128,32,.3);background:var(--acc-dim)}
+
+/* Game code */
+.gcode{font-family:var(--f1);font-size:clamp(38px,10vw,64px);font-weight:900;letter-spacing:.18em;color:var(--acc);background:var(--acc-dim);border:2px solid rgba(240,128,32,.3);border-radius:var(--rl);padding:14px 28px;display:inline-block;text-align:center}
+
+/* Splash */
+.splash{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;text-align:center}
+.logo-name{font-family:var(--f1);font-size:clamp(52px,14vw,88px);font-weight:900;letter-spacing:-.01em;line-height:.9}
+.logo-name span{color:var(--acc)}
+.splash-btns{display:flex;flex-direction:column;gap:12px;width:100%;max-width:280px;margin-top:40px}
+
+/* Waiting animation */
+.dots{display:flex;gap:6px;justify-content:center;margin:20px 0}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--acc);animation:bop 1.2s infinite}
+.dot:nth-child(2){animation-delay:.2s}.dot:nth-child(3){animation-delay:.4s}
+@keyframes bop{0%,60%,100%{transform:translateY(0);opacity:.5}30%{transform:translateY(-10px);opacity:1}}
+
+/* Toasts */
+#toasts{position:fixed;bottom:20px;right:20px;z-index:9999;display:flex;flex-direction:column;gap:8px;pointer-events:none}
+.toast{padding:11px 16px;border-radius:var(--r);font-size:13px;font-weight:500;max-width:300px;opacity:0;transform:translateY(8px);transition:all .3s;pointer-events:auto}
+.toast.show{opacity:1;transform:none}
+.ti{background:var(--card);border:1px solid var(--bdr);color:var(--txt)}
+.ts{background:rgba(54,201,142,.92);color:#fff}
+.te{background:rgba(232,64,64,.92);color:#fff}
+
+/* Brand dot */
+.bdot{width:10px;height:10px;border-radius:50%;display:inline-block;flex-shrink:0}
+
+/* Sep */
+.sep{height:1px;background:var(--bdr);margin:18px 0}
+
+/* Hint text */
+.hint{font-size:12px;color:var(--txt2);margin-top:4px}
+
+/* Spinner */
+.spin{display:inline-block;width:16px;height:16px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* MS bar */
+.ms-bar-wrap{background:var(--card2);border-radius:99px;height:8px;overflow:hidden;min-width:60px}
+.ms-bar{height:100%;border-radius:99px;transition:width .5s}
+
+/* Slider row */
+.sl-row{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.sl-row input[type=range]{flex:1}
+.sl-val{font-family:var(--f1);font-size:14px;font-weight:700;min-width:68px;text-align:right}
+
+/* Price row */
+.pr-row{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--bdr)}
+.pr-row:last-child{border-bottom:none}
+.pr-icon{font-size:20px;width:28px;text-align:center}
+.pr-seg{flex:1;font-size:14px;font-weight:500}
+.pr-ref{font-size:12px;color:var(--txt2)}
+.pr-in{width:110px;text-align:right}
+
+/* Results row */
+.rank-1{color:var(--yel);font-family:var(--f1);font-weight:900}
+.rank-2{color:var(--txt2);font-family:var(--f1)}
+.rank-3{color:var(--acc);font-family:var(--f1)}
+
+@media(max-width:580px){
+  .page,.page-sm{padding:14px 10px}
+  .card{padding:14px}
+  th,td{padding:7px 8px;font-size:12px}
+  .kpi-g{grid-template-columns:1fr 1fr}
+  h2{font-size:18px}
+  .btn-lg{padding:12px 20px;font-size:15px}
+}
+</style>
+
+</head>
+<body>
+<div id="app" style="min-height:100vh"></div>
+<div id="toasts"></div>
+
+<script>
+'use strict';
+
+// ══════════════════════════════════════════════════════════════════════════
+// CONFIGURACIÓN FIREBASE
+// 1. Creá un proyecto en https://console.firebase.google.com
+// 2. En Firestore Database → Crear base de datos (modo prueba para empezar)
+// 3. En Configuración del proyecto → Aplicaciones web → Agregar app
+// 4. Copiá los valores de firebaseConfig aquí abajo
+// ══════════════════════════════════════════════════════════════════════════
+
+const FIREBASE_CONFIG = {
+  apiKey: "AIzaSyBAuYwN9UbLF9sAw3ef94wbXdNMZwGZSOI",
+  authDomain: "simulacion-autos.firebaseapp.com",
+  projectId: "simulacion-autos",
+  storageBucket: "simulacion-autos.firebasestorage.app",
+  messagingSenderId: "941396516463",
+  appId: "1:941396516463:web:a641ab0a17aed60877379a",
+  measurementId: "G-TQ23MGWCVP"
+};
+// ══════════════════════════════════════════════════════════════════════════
+
+// ── CONSTANTS ──────────────────────────────────────────────────────────────
+const SID = Math.random().toString(36).slice(2,10);
+
+const MKT = {
+  total: 10000,
+  segs: {
+    compact:{name:'Compactos', icon:'🚙',share:.19,ref:14000,cogs:.72},
+    sedan:  {name:'Sedanes',   icon:'🚗',share:.22,ref:22000,cogs:.74},
+    suv:    {name:'SUVs',      icon:'🚐',share:.27,ref:30000,cogs:.70},
+    pickup: {name:'Pickups',   icon:'🛻',share:.15,ref:32000,cogs:.68},
+    hybrid: {name:'Híbridos',  icon:'🌿',share:.10,ref:28000,cogs:.73},
+    ev:     {name:'Eléctricos',icon:'⚡',share:.07,ref:38000,cogs:.69},
+  }
+};
+const SK = Object.keys(MKT.segs);
+
+const BRANDS = {
+  Toyota:    {color:'#CC1010',image:.965},
+  Volkswagen:{color:'#1A4A9A',image:.911},
+  Hyundai:   {color:'#2068C0',image:.878},
+  Chevrolet: {color:'#C49000',image:.733},
+  Fiat:      {color:'#C83020',image:.695},
+  Renault:   {color:'#DAA000',image:.649},
+};
+const BK = Object.keys(BRANDS);
+const TC = ['ALFA','BETA','GAMMA','DELTA','EPSILON','ZETA'];
+
+// Real brand portfolios per segment (models sold in Uruguay)
+const BRAND_PORTFOLIO = {
+  Toyota:    {compact:['Yaris'],        sedan:['Corolla'],   suv:['RAV4','Land Cruiser'], pickup:['Hilux'],        hybrid:['Corolla Hybrid','RAV4 Hybrid'], ev:['bZ4X']},
+  Volkswagen:{compact:['Polo'],         sedan:['Virtus'],    suv:['T-Cross','Tiguan'],    pickup:[],               hybrid:[],                               ev:['ID.4']},
+  Hyundai:   {compact:['HB20'],         sedan:['Elantra'],   suv:['Creta','Tucson'],      pickup:[],               hybrid:['Tucson Hybrid'],                ev:['Ioniq 5','Ioniq 6']},
+  Chevrolet: {compact:['Onix'],         sedan:[],            suv:['Tracker'],             pickup:['S10'],           hybrid:[],                               ev:['Equinox EV']},
+  Fiat:      {compact:['Argo','Mobi'],  sedan:[],            suv:['Pulse','Fastback'],    pickup:['Toro'],          hybrid:[],                               ev:['500e']},
+  Renault:   {compact:['Sandero','Kwid'],sedan:[],           suv:['Duster','Kardian'],    pickup:['Oroch'],         hybrid:[],                               ev:['Megane E-Tech','Zoe']},
+};
+
+const INIT_BUD  = 3_000_000;
+const BASE_BUD  = 1_500_000;
+const PROF_PCT  = 0.03;
+const DIST_CAP  = 1_000_000;
+const RD_CAP    = 1_000_000;
+const FIN_CAP   = 500_000;
+const TRADEIN_CAP = 400_000;
+
+// Media channel effectiveness per segment
+const MEDIA_EFF = {
+  compact:{tv:.70,digital:1.40,pdv:1.10,spon:.80},
+  sedan:  {tv:.90,digital:1.20,pdv:1.10,spon:.80},
+  suv:    {tv:1.20,digital:.85,pdv:1.00,spon:1.20},
+  pickup: {tv:1.40,digital:.65,pdv:.90, spon:1.30},
+  hybrid: {tv:.80,digital:1.30,pdv:1.00,spon:.95},  // Eco-conscious, somewhat digital
+  ev:     {tv:.60,digital:1.65,pdv:.85, spon:1.00},  // Tech-forward, very digital
+};
+// Sensitivity of each segment to financing / trade-in
+const FIN_SENS    = {compact:1.0,sedan:.90,suv:.70,pickup:.60,hybrid:.75,ev:.55};
+const TRADEIN_SENS= {compact:1.0,sedan:.85,suv:.65,pickup:.55,hybrid:.70,ev:.50};
+// Warranty
+const WARRANTY_COSTS  = {basic:50_000,standard:150_000,premium:300_000,extended:500_000};
+const WARRANTY_SCORES = {basic:.40,standard:.70,premium:.90,extended:1.0};
+
+// ── STATE ──────────────────────────────────────────────────────────────────
+const G = {
+  db:null, view:null, gameId:null, role:null,
+  teamCode:null, teacherPin:null, gameData:null,
+  decisions:{}, myDecision:null, roundResults:null, subs:[],
+};
+
+// ── UTILS ──────────────────────────────────────────────────────────────────
+const $ = id => document.getElementById(id);
+const fmt = (n,d=0) => new Intl.NumberFormat('es-UY',{maximumFractionDigits:d}).format(n);
+const fmtM = n => n>=1e6?'$'+fmt(n/1e6,2)+'M':n>=1e3?'$'+fmt(n/1e3,0)+'K':'$'+fmt(n,0);
+const fmtP = n => (n*100).toFixed(1)+'%';
+
+function randCode(){
+  const c='ABCDEFGHJKLMNPQRSTUVWXYZ2346789';
+  return Array.from({length:6},()=>c[Math.floor(Math.random()*c.length)]).join('');
+}
+function clearSubs(){
+  G.subs.forEach(u=>{try{u()}catch(e){}});
+  G.subs=[];
+}
+function clearLocal(){try{sessionStorage.removeItem('asim')}catch(e){}}
+function exitGame(){
+  clearLocal();
+  G.gameId=null;G.role=null;G.teamCode=null;G.teacherPin=null;
+  G.gameData=null;G.decisions={};G.myDecision=null;G.roundResults=null;
+  showSplash();
+}
+function toast(msg,t='i'){
+  const el=document.createElement('div');
+  el.className=`toast t${t}`;
+  el.textContent=msg;
+  $('toasts').appendChild(el);
+  requestAnimationFrame(()=>el.classList.add('show'));
+  setTimeout(()=>{el.classList.remove('show');setTimeout(()=>el.remove(),400)},3600);
+}
+function saveLocal(){
+  try{sessionStorage.setItem('asim',JSON.stringify({gameId:G.gameId,role:G.role,teamCode:G.teamCode,teacherPin:G.teacherPin}))}catch(e){}
+}
+function loadLocal(){
+  try{return JSON.parse(sessionStorage.getItem('asim'))||null}catch(e){return null}
+}
+function brandDot(bk,sz=10){
+  return `<span class="bdot" style="width:${sz}px;height:${sz}px;background:${BRANDS[bk]?.color||'#888'}"></span>`;
+}
+
+// ── MARKET MODEL ──────────────────────────────────────────────────────────
+function computeRound(gameData, decs){
+  const {teams} = gameData;
+  const teamOut={}, mktSum={};
+
+  for(const [sk,seg] of Object.entries(MKT.segs)){
+    const segU = Math.round(MKT.total*seg.share);
+
+    // Weighted advertising per team for this segment (media mix)
+    const segAdByTeam={};
+    let totalSegAd=0;
+    for(const [tc,team] of Object.entries(teams)){
+      const d=decs[tc];
+      if(!d||!d.portfolio?.includes(sk)) continue;
+      const mix=d.mediaMix||{tv:25,digital:25,pdv:25,spon:25};
+      const e=MEDIA_EFF[sk];
+      const wEff=(mix.tv*e.tv+mix.digital*e.digital+mix.pdv*e.pdv+mix.spon*e.spon)/100;
+      const effAdv=(d.advertising||0)*wEff;
+      segAdByTeam[tc]=effAdv;
+      totalSegAd+=effAdv;
+    }
+
+    const attrs={};
+    for(const [tc,team] of Object.entries(teams)){
+      const d=decs[tc];
+      if(!d||!d.portfolio?.includes(sk)) continue;
+
+      const price   = Math.max(1, d.pricing?.[sk]||seg.ref);
+      const dist    = d.distribution||0;
+      const rd      = d.rd||0;
+      const effAdv  = segAdByTeam[tc]||0;
+
+      // Trade-in: reduces effective price perception
+      const trAdj   = 1 - TRADEIN_SENS[sk]*0.08*Math.min(1,(d.tradeInBudget||0)/TRADEIN_CAP);
+      const f_p     = Math.min(2.0, Math.max(0.3, seg.ref/(price*trAdj)));
+
+      // SOV (weighted by media mix efficiency)
+      const f_s     = totalSegAd>0 ? 0.3+1.7*Math.pow(Math.min(1,effAdv/totalSegAd),0.5) : 0.3;
+
+      // Distribution
+      const f_d     = 0.35+0.65*Math.min(1,dist/DIST_CAP);
+
+      // R&D
+      const f_r     = 0.80+0.40*Math.min(1,rd/RD_CAP);
+
+      // Brand image
+      const f_i     = BRANDS[team.brandKey]?.image||0.7;
+
+      // Financing (reduces price sensitivity barrier)
+      const f_f     = 0.85+0.45*FIN_SENS[sk]*Math.min(1,(d.financingBudget||0)/FIN_CAP);
+
+      // Warranty / post-venta (accumulated over rounds)
+      const wImg    = Math.min(1, team.warrantyImage??0.3);
+      const f_w     = 0.80+0.35*wImg;
+
+      attrs[tc] = f_p*f_s*f_d*f_r*f_i*f_f*f_w;
+    }
+
+    const tot = Object.values(attrs).reduce((s,a)=>s+a,0);
+    mktSum[sk]={segU,leader:null,leaderMS:0,byTeam:{}};
+    for(const [tc,attr] of Object.entries(attrs)){
+      const ms=tot>0?attr/tot:0;
+      const d=decs[tc];
+      const price=Math.max(1,d.pricing?.[sk]||seg.ref);
+      const units=Math.round(ms*segU);
+      const rev=units*price;
+      const cogs=rev*seg.cogs;
+      mktSum[sk].byTeam[tc]={ms,units};
+      if(ms>mktSum[sk].leaderMS){mktSum[sk].leaderMS=ms;mktSum[sk].leader=tc;}
+      if(!teamOut[tc]) teamOut[tc]={units:0,revenue:0,cogs:0,segs:{}};
+      teamOut[tc].segs[sk]={units,ms,revenue:rev};
+      teamOut[tc].units+=units;
+      teamOut[tc].revenue+=rev;
+      teamOut[tc].cogs+=cogs;
+    }
+  }
+
+  const out={};
+  for(const tc of Object.keys(teams)){
+    const tr=teamOut[tc]||{units:0,revenue:0,cogs:0,segs:{}};
+    const d=decs[tc];
+    const mkts=(d?.advertising||0)+(d?.distribution||0)+(d?.rd||0)
+              +(d?.financingBudget||0)+(d?.tradeInBudget||0)+(WARRANTY_COSTS[d?.warrantyLevel]||WARRANTY_COSTS.basic);
+    const gross=tr.revenue-tr.cogs;
+    const net=gross-mkts;
+
+    // Update warranty image (accumulates across rounds)
+    const oldWImg=Math.min(1, teams[tc].warrantyImage??0.3);
+    const wScore=WARRANTY_SCORES[d?.warrantyLevel||'basic'];
+    const newWImg=Math.min(1, oldWImg*0.75+wScore*0.25);
+
+    out[tc]={
+      units:tr.units,revenue:Math.round(tr.revenue),cogs:Math.round(tr.cogs),
+      gross:Math.round(gross),mktCost:Math.round(mkts),net:Math.round(net),
+      newBudget:Math.round(BASE_BUD+Math.max(0,net)*PROF_PCT),
+      ms:tr.units/MKT.total,segs:tr.segs,
+      warrantyImage:newWImg,
+    };
+  }
+  return{round:gameData.currentRound,processedAt:new Date().toISOString(),teams:out,mktSum};
+}
+
+// ── DB REFS ────────────────────────────────────────────────────────────────
+const gDoc  = () => G.db.doc(`games/${G.gameId}`);
+const dDoc  = (tc,r) => G.db.doc(`decisions/${G.gameId}-r${r}-${tc}`);
+const rDoc  = (r) => G.db.doc(`results/${G.gameId}-r${r}`);
+const dQuery= (r) => G.db.collection('decisions').where('roundKey','==',`${G.gameId}-r${r}`);
+
+// ── NAVIGATION ─────────────────────────────────────────────────────────────
+function go(view,html){
+  clearSubs();
+  G.view=view;
+  const xb=view!=='splash'
+    ?`<button onclick="exitGame()" style="position:fixed;top:10px;right:10px;z-index:999;background:var(--surf);border:1px solid var(--bdr);color:var(--txt2);padding:6px 12px;border-radius:var(--r);font-size:12px;font-family:var(--f2);font-weight:600;cursor:pointer" onmouseover="this.style.color='var(--txt)'" onmouseout="this.style.color='var(--txt2)'">✕ Salir</button>`
+    :'';
+  $('app').innerHTML=xb+html;
+}
+
+// ══════════════════════════════════════════════════════════════════════════
+// VIEWS
+// ══════════════════════════════════════════════════════════════════════════
+
+// ── SPLASH ────────────────────────────────────────────────────────────────
+function showSplash(){
+  const baseUrl=location.href.split('#')[0];
+  const tUrl=baseUrl+'#teacher';
+  const sUrl=baseUrl+'#student';
+  go('splash',`
+  <div class="splash">
+    <div style="margin-bottom:10px;font-size:52px">🏎️</div>
+    <div class="logo-name">Auto<span>Sim</span> UY</div>
+    <div class="muted mt2" style="font-size:14px">Simulador de Marketing Automotor</div>
+    <div class="small muted mt2" style="opacity:.6">Basado en datos del mercado uruguayo 2026 · Equipos Consultores</div>
+    <div class="splash-btns">
+      <button class="btn btn-lg btn-p" id="btnT">🎓 Soy Docente</button>
+      <button class="btn btn-lg btn-g" id="btnS">👥 Soy Estudiante</button>
+    </div>
+    <div style="margin-top:28px;padding:16px;background:var(--card);border:1px solid var(--bdr);border-radius:var(--rl);max-width:380px;text-align:left">
+      <div class="small muted mb2" style="text-transform:uppercase;letter-spacing:.06em;font-weight:700">🔗 Links de acceso directo</div>
+      <div class="small muted mb1">Para abrir en ventanas separadas:</div>
+      <div class="row g2 mb2" style="flex-wrap:wrap">
+        <span class="small" style="color:var(--txt2);word-break:break-all;flex:1">Docente: <code style="font-size:10px;color:var(--acc)">#teacher</code></span>
+        <button class="btn btn-sm btn-s" id="cpyT">📋 Copiar</button>
+      </div>
+      <div class="row g2" style="flex-wrap:wrap">
+        <span class="small" style="color:var(--txt2);word-break:break-all;flex:1">Alumno: <code style="font-size:10px;color:var(--blue)">#student</code></span>
+        <button class="btn btn-sm btn-s" id="cpyS">📋 Copiar</button>
+      </div>
+    </div>
+    <div class="muted small mt4" style="max-width:340px">
+      Herramienta educativa para simular estrategias de marca y producto<br>en el mercado automotor de Uruguay.
+    </div>
+  </div>`);
+  $('btnT').onclick=()=>showTeacherSetup();
+  $('btnS').onclick=()=>showTeamJoin();
+  $('cpyT').onclick=()=>{navigator.clipboard.writeText(tUrl).then(()=>toast('Link docente copiado','i'))};
+  $('cpyS').onclick=()=>{navigator.clipboard.writeText(sUrl).then(()=>toast('Link alumno copiado','i'))};
+}
+
+// ── TEACHER SETUP ─────────────────────────────────────────────────────────
+function showTeacherSetup(){
+  const gc=randCode();
+  go('tSetup',`
+  <div class="page-sm">
+    <button class="btn btn-g btn-sm mb3" id="btnBack">← Volver</button>
+    <h2>Crear Juego</h2>
+    <div class="muted small mt2 mb3">Configurá la partida y compartí el código con los equipos.</div>
+    <div class="card mt3">
+      <div class="fg">
+        <label>Código de Juego</label>
+        <div class="gcode" style="font-size:clamp(28px,7vw,44px);padding:10px 20px;letter-spacing:.15em">${gc}</div>
+        <div class="hint">Los equipos usan este código para unirse.</div>
+      </div>
+      <div class="fg">
+        <label>PIN del Docente (4 dígitos)</label>
+        <input id="pin" class="fc" type="text" inputmode="numeric" maxlength="4" placeholder="ej: 1234" style="font-family:var(--f1);font-size:22px;letter-spacing:.2em;max-width:140px">
+        <div class="hint">Solo el docente lo necesita para controlar la partida.</div>
+      </div>
+      <div class="row g4">
+        <div class="fg flex1">
+          <label>Rondas</label>
+          <select id="rounds" class="fc">
+            <option value="3">3 rondas</option>
+            <option value="4">4 rondas</option>
+            <option value="5" selected>5 rondas</option>
+            <option value="6">6 rondas</option>
+            <option value="8">8 rondas</option>
+          </select>
+        </div>
+        <div class="fg flex1">
+          <label>Equipos</label>
+          <select id="nteams" class="fc">
+            <option value="2">2 equipos</option>
+            <option value="3">3 equipos</option>
+            <option value="4" selected>4 equipos</option>
+            <option value="5">5 equipos</option>
+            <option value="6">6 equipos</option>
+          </select>
+        </div>
+      </div>
+      <div id="teamConfig"></div>
+      <button class="btn btn-p btn-block mt4" id="btnCreate">Crear Juego</button>
+    </div>
+  </div>`);
+
+  function renderTeamConfig(){
+    const n=parseInt($('nteams').value);
+    const usedBrands=[];
+    let html='<div class="sep"></div><h3 class="mb3">Equipos y Marcas</h3>';
+    for(let i=0;i<n;i++){
+      const code=TC[i];
+      const opts=BK.map(b=>`<option value="${b}"${b===BK[i]?'selected':''}>${b}</option>`).join('');
+      html+=`<div class="row g3 mb2" style="align-items:flex-start">
+        <div style="padding-top:26px;font-family:var(--f1);font-weight:700;min-width:58px;color:var(--txt2)">${code}</div>
+        <div class="fg flex1" style="margin:0">
+          <label>Nombre del Equipo</label>
+          <input class="fc" id="tname_${code}" value="Equipo ${code}" style="font-size:13px">
+        </div>
+        <div class="fg" style="margin:0;min-width:130px">
+          <label>Marca</label>
+          <select class="fc brand-sel" id="brand_${code}" data-code="${code}">${opts}</select>
+        </div>
+      </div>`;
+    }
+    $('teamConfig').innerHTML=html;
+    // enforce unique brands
+    document.querySelectorAll('.brand-sel').forEach(sel=>{
+      sel.onchange=()=>{
+        const used=new Set();
+        let conflict=false;
+        document.querySelectorAll('.brand-sel').forEach(s=>{
+          if(used.has(s.value)){conflict=true;s.style.borderColor='var(--red)'}
+          else{used.add(s.value);s.style.borderColor=''}
+        });
+      };
+    });
+  }
+  renderTeamConfig();
+  $('nteams').onchange=renderTeamConfig;
+  $('btnBack').onclick=()=>showSplash();
+  $('btnCreate').onclick=async()=>{
+    const pin=$('pin').value.trim();
+    if(!/^\d{4}$/.test(pin)){toast('El PIN debe tener exactamente 4 dígitos','e');return;}
+    const n=parseInt($('nteams').value);
+    const teams={};
+    const used=new Set();
+    let err=false;
+    for(let i=0;i<n;i++){
+      const code=TC[i];
+      const bk=$('brand_'+code).value;
+      if(used.has(bk)){toast(`La marca ${bk} está repetida. Asigná una diferente.`,'e');err=true;break;}
+      used.add(bk);
+      teams[code]={name:$('tname_'+code).value.trim()||code,brandKey:bk,budget:INIT_BUD,submittedRound:0,color:BRANDS[bk].color,warrantyImage:0.3};
+    }
+    if(err)return;
+    const btn=$('btnCreate');
+    btn.disabled=true;
+    btn.innerHTML='<span class="spin"></span> Creando…';
+    try{
+      const data={gameId:gc,status:'lobby',currentRound:1,totalRounds:parseInt($('rounds').value),teacherPin:pin,teams,createdAt:new Date().toISOString()};
+      await G.db.doc(`games/${gc}`).set(data);
+      G.gameId=gc; G.role='teacher'; G.teacherPin=pin; G.gameData=data;
+      saveLocal();
+      showTeacherLobby();
+    }catch(e){
+      toast('Error al crear juego: '+e.message,'e');
+      btn.disabled=false;btn.textContent='Crear Juego';
+    }
+  };
+}
+
+// ── TEACHER LOBBY ─────────────────────────────────────────────────────────
+function showTeacherLobby(){
+  go('tLobby',`
+  <div class="page-sm tc">
+    <div class="small muted mb3">Compartí este código con los equipos:</div>
+    <div class="gcode">${G.gameId}</div>
+    <div class="muted small mt2">${G.gameData.totalRounds} rondas · ${Object.keys(G.gameData.teams).length} equipos</div>
+    <div class="card mt4">
+      <div class="card-t">Estado de Equipos</div>
+      <div id="lobbyTeams">…</div>
+    </div>
+    <button class="btn btn-p btn-block btn-lg mt4" id="btnStart">▶ Iniciar Juego</button>
+    <div class="hint tc mt2">Podés iniciar aunque no todos hayan entrado.</div>
+  </div>`);
+
+  function renderTeams(gd){
+    const t=gd.teams;
+    $('lobbyTeams').innerHTML=Object.entries(t).map(([code,team])=>{
+      const bp=BRAND_PORTFOLIO[team.brandKey]||{};
+      const segs=Object.entries(bp).filter(([,m])=>m.length>0).map(([sk,m])=>`${MKT.segs[sk]?.icon} ${m.join('/')}`).join(' · ');
+      return `<div class="col" style="padding:10px 0;border-bottom:1px solid var(--bdr);gap:3px">
+        <div class="row g3">
+          ${brandDot(team.brandKey,12)}
+          <div class="flex1" style="font-weight:600">${code} — ${team.name}</div>
+          <div class="small" style="color:${BRANDS[team.brandKey]?.color||'#888'};font-weight:700">${team.brandKey}</div>
+        </div>
+        <div class="small muted" style="padding-left:20px">${segs}</div>
+      </div>`;
+    }).join('')+'<div style="height:4px"></div>';
+  }
+  renderTeams(G.gameData);
+
+  G.subs.push(gDoc().onSnapshot(snap=>{
+    if(!snap.exists)return;
+    G.gameData=snap.data();
+    if(G.gameData.status==='active'){showTeacherControl();return;}
+    renderTeams(G.gameData);
+  }));
+
+  $('btnStart').onclick=async()=>{
+    const btn=$('btnStart');
+    btn.disabled=true;btn.innerHTML='<span class="spin"></span>';
+    try{
+      await gDoc().update({status:'active',currentRound:1});
+    }catch(e){
+      toast('Error: '+e.message,'e');
+      btn.disabled=false;btn.textContent='▶ Iniciar Juego';
+    }
+  };
+}
+
+// ── TEACHER CONTROL ───────────────────────────────────────────────────────
+function showTeacherControl(){
+  const {currentRound,totalRounds,teams}=G.gameData;
+  go('tCtrl',`
+  <div class="page">
+    <div class="row g3 mb4" style="flex-wrap:wrap">
+      <div style="flex:1">
+        <div class="row g2 mb2">
+          <span style="font-family:var(--f1);font-size:14px;font-weight:700;letter-spacing:.06em;color:var(--txt2);text-transform:uppercase">AutoSim UY</span>
+          <span class="bdg bdg-a">${G.gameId}</span>
+        </div>
+        <h2>Ronda ${currentRound} <span class="muted" style="font-size:16px">/ ${totalRounds}</span></h2>
+      </div>
+      <div class="tc">
+        <div class="small muted">Presupuesto inicial</div>
+        <div class="num-sm">${fmtM(INIT_BUD)}</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-t">Decisiones Ronda ${currentRound}</div>
+      <div id="tcDecStatus">
+        <div class="muted small">Cargando…</div>
+      </div>
+    </div>
+
+    <div id="tcActions" class="mt4">
+      <button class="btn btn-p btn-block btn-lg" id="btnClose">🔒 Cerrar Ronda y Calcular</button>
+      <div class="hint tc mt2">Cerrás cuando estén listos (o cuando lo decidás). Los equipos que no enviaron decisiones quedan fuera del mercado esta ronda.</div>
+    </div>
+
+    ${currentRound>1?`
+    <div class="card mt4">
+      <div class="card-t">Última Ronda</div>
+      <div id="tcLastRes"><div class="muted small">Cargando…</div></div>
+    </div>`:''}
+  </div>`);
+
+  // Subscribe to decisions
+  G.subs.push(dQuery(currentRound).onSnapshot(snap=>{
+    G.decisions={};
+    snap.docs.forEach(d=>{const dt=d.data();G.decisions[dt.teamCode]=dt;});
+    renderDecStatus();
+  },()=>{}));
+
+  // Load last results if round > 1
+  if(currentRound>1){
+    rDoc(currentRound-1).get().then(snap=>{
+      if(snap.exists&&$('tcLastRes')) renderMiniResults(snap.data());
+    }).catch(()=>{});
+  }
+
+  // Monitor game state
+  G.subs.push(gDoc().onSnapshot(snap=>{
+    if(!snap.exists)return;
+    const old=G.gameData?.status;
+    G.gameData=snap.data();
+    if(G.gameData.status==='results') showTeacherResults();
+    else if(G.gameData.status==='ended') showGameEnded();
+  }));
+
+  function renderDecStatus(){
+    const el=$('tcDecStatus');
+    if(!el)return;
+    const teamList=Object.entries(G.gameData.teams);
+    const submitted=teamList.filter(([tc])=>G.decisions[tc]);
+    el.innerHTML=`
+    <div class="row g2 mb3">
+      <span class="num-sm" style="color:var(--grn)">${submitted.length}</span>
+      <span class="muted">/ ${teamList.length} equipos enviaron decisiones</span>
+    </div>
+    <div class="tw"><table>
+      <thead><tr><th>Equipo</th><th>Estado</th><th>Segs</th><th class="tr">Pub.</th><th class="tr">Dist.</th><th class="tr">I+D</th><th class="tr">Fin.</th><th class="tr">TI</th><th>Mix TV/Dig</th><th>Garantía</th></tr></thead>
+      <tbody>
+      ${teamList.map(([tc,team])=>{
+        const d=G.decisions[tc];
+        const ok=!!d;
+        const mix=d?.mediaMix;
+        return `<tr>
+          <td><div class="row g2">${brandDot(team.brandKey)}<strong>${tc}</strong></div></td>
+          <td>${ok?'<span class="bdg bdg-g">✓</span>':'<span class="bdg bdg-m">⏳</span>'}</td>
+          <td class="small">${ok&&d.portfolio?(d.portfolio.map(s=>MKT.segs[s]?.icon||s).join(''))||'—':'—'}</td>
+          <td class="tr small mono">${ok?fmtM(d.advertising||0):'—'}</td>
+          <td class="tr small mono">${ok?fmtM(d.distribution||0):'—'}</td>
+          <td class="tr small mono">${ok?fmtM(d.rd||0):'—'}</td>
+          <td class="tr small mono">${ok?fmtM(d.financingBudget||0):'—'}</td>
+          <td class="tr small mono">${ok?fmtM(d.tradeInBudget||0):'—'}</td>
+          <td class="small">${ok&&mix?`${mix.tv}/${mix.digital}%`:'—'}</td>
+          <td class="small">${ok?(d.warrantyLevel||'—'):'—'}</td>
+        </tr>`;
+      }).join('')}
+      </tbody>
+    </table></div>`;
+  }
+
+  function renderMiniResults(res){
+    const el=$('tcLastRes');
+    if(!el||!res)return;
+    el.innerHTML=`<div class="tw"><table>
+      <thead><tr><th>Equipo</th><th class="tr">Unidades</th><th class="tr">Ingreso</th><th class="tr">Resultado</th><th class="tr">Presupuesto</th></tr></thead>
+      <tbody>
+      ${Object.entries(res.teams).sort((a,b)=>b[1].net-a[1].net).map(([tc,t])=>`
+        <tr>
+          <td><div class="row g2">${brandDot(G.gameData.teams[tc]?.brandKey||'')}<strong>${tc}</strong></div></td>
+          <td class="tr mono">${fmt(t.units)}</td>
+          <td class="tr mono">${fmtM(t.revenue)}</td>
+          <td class="tr mono" style="color:${t.net>=0?'var(--grn)':'var(--red)'}">${t.net>=0?'+':''}${fmtM(t.net)}</td>
+          <td class="tr mono">${fmtM(t.newBudget)}</td>
+        </tr>`).join('')}
+      </tbody>
+    </table></div>`;
+  }
+
+  $('btnClose').onclick=closeRound;
+}
+
+async function closeRound(){
+  const btn=$('btnClose');
+  if(btn){btn.disabled=true;btn.innerHTML='<span class="spin"></span> Calculando…';}
+  try{
+    const round=G.gameData.currentRound;
+    toast('Leyendo decisiones…','i');
+    const snap=await dQuery(round).get();
+    const decs={};
+    snap.docs.forEach(d=>{const dt=d.data();decs[dt.teamCode]=dt;});
+    toast(`${snap.docs.length} decisión(es) recibida(s). Calculando…`,'i');
+    const results=computeRound(G.gameData,decs);
+    await rDoc(round).set(results);
+    const newTeams={};
+    for(const [tc,team] of Object.entries(G.gameData.teams)){
+      const tr=results.teams[tc];
+      newTeams[tc]={...team,budget:tr?.newBudget??BASE_BUD,submittedRound:0,warrantyImage:tr?.warrantyImage??team.warrantyImage??0.3};
+    }
+    const isLast=round>=G.gameData.totalRounds;
+    const newGd={...G.gameData,status:isLast?'ended':'results',currentRound:round,teams:newTeams};
+    await gDoc().set(newGd);
+    G.gameData=newGd;
+    G.roundResults=results;
+    if(isLast) showGameEnded();
+    else showTeacherResults();
+  }catch(e){
+    console.error('closeRound error:',e);
+    const msg=e?.message||e?.code||JSON.stringify(e)||'desconocido';
+    toast('Error al cerrar ronda: '+msg,'e');
+    if(btn){btn.disabled=false;btn.innerHTML='🔒 Cerrar Ronda y Calcular';}
+  }
+}
+
+// ── TEACHER RESULTS ───────────────────────────────────────────────────────
+function showTeacherResults(){
+  const round=G.gameData.currentRound;
+  const res=G.roundResults;
+  go('tRes',`
+  <div class="page">
+    <div class="row g3 mb4">
+      <div style="flex:1">
+        <div class="small muted mb1">AutoSim UY · ${G.gameId}</div>
+        <h2>Resultados Ronda ${round}</h2>
+      </div>
+      <div>
+        <button class="btn btn-p" id="btnNext">${round>=G.gameData.totalRounds?'🏁 Ver Ranking Final':'▶ Siguiente Ronda'}</button>
+      </div>
+    </div>
+    ${res?renderResultsHTML(res,true):'<div class="card"><div class="muted small tc">Cargando resultados…</div></div>'}
+  </div>`);
+
+  if(!res){
+    rDoc(round).get().then(snap=>{
+      if(snap.exists){G.roundResults=snap.data();showTeacherResults();}
+    }).catch(()=>{});
+  }
+
+  // Also listen for game state
+  G.subs.push(gDoc().onSnapshot(snap=>{
+    if(!snap.exists)return;
+    G.gameData=snap.data();
+    if(G.gameData.status==='active'&&G.gameData.currentRound>round) showTeacherControl();
+    if(G.gameData.status==='ended') showGameEnded();
+  }));
+
+  $('btnNext').onclick=async()=>{
+    const btn=$('btnNext');
+    btn.disabled=true;
+    btn.innerHTML='<span class="spin"></span>';
+    if(round>=G.gameData.totalRounds){
+      showGameEnded();return;
+    }
+    try{
+      await gDoc().update({status:'active',currentRound:round+1});
+    }catch(e){
+      toast('Error: '+e.message,'e');
+      btn.disabled=false;btn.textContent='▶ Siguiente Ronda';
+    }
+  };
+}
+
+function renderResultsHTML(res,full=false){
+  const teams=G.gameData?.teams||{};
+  const sorted=Object.entries(res.teams).sort((a,b)=>b[1].net-a[1].net);
+  const segsHTML=SK.map(sk=>{
+    const seg=MKT.segs[sk];
+    const sum=res.mktSum?.[sk];
+    if(!sum)return '';
+    const sorted2=Object.entries(sum.byTeam||{}).sort((a,b)=>b[1].ms-a[1].ms);
+    return `<div style="margin-bottom:8px">
+      <div class="row g2 mb1"><span>${seg.icon}</span><strong style="font-size:13px">${seg.name}</strong><span class="small muted">(${fmt(seg.share*MKT.total)} unid.)</span></div>
+      ${sorted2.map(([tc,d],i)=>`
+        <div class="row g2" style="margin-bottom:4px">
+          <div style="width:52px;font-size:12px;color:var(--txt2)">${TC.indexOf(tc)>=0?tc:'?'}</div>
+          ${brandDot(teams[tc]?.brandKey||'')}
+          <div class="ms-bar-wrap flex1"><div class="ms-bar" style="width:${(d.ms*100).toFixed(1)}%;background:${BRANDS[teams[tc]?.brandKey||'']?.color||'var(--acc)'}"></div></div>
+          <div class="mono small" style="min-width:40px;text-align:right">${fmtP(d.ms)}</div>
+        </div>`).join('')}
+    </div>`;
+  }).join('');
+
+  return `
+  <div class="card mb3">
+    <div class="card-t">Performance por Equipo — Ronda ${res.round}</div>
+    <div class="tw"><table>
+      <thead><tr><th>#</th><th>Equipo</th><th>Marca</th><th class="tr">Unidades</th><th class="tr">Cuota</th><th class="tr">Ingreso</th><th class="tr">Resultado Neto</th><th class="tr">Próx. Presupuesto</th></tr></thead>
+      <tbody>
+      ${sorted.map(([tc,t],i)=>`
+        <tr>
+          <td class="${i===0?'rank-1':i===1?'rank-2':i===2?'rank-3':''}">${i===0?'🥇':i===1?'🥈':i===2?'🥉':i+1}</td>
+          <td><div class="row g2">${brandDot(teams[tc]?.brandKey||'')}<strong>${tc}</strong><span class="small muted">${teams[tc]?.name||''}</span></div></td>
+          <td class="small">${teams[tc]?.brandKey||'—'}</td>
+          <td class="tr mono">${fmt(t.units)}</td>
+          <td class="tr mono">${fmtP(t.ms)}</td>
+          <td class="tr mono">${fmtM(t.revenue)}</td>
+          <td class="tr mono" style="color:${t.net>=0?'var(--grn)':'var(--red)'}">${t.net>=0?'+':''}${fmtM(t.net)}</td>
+          <td class="tr mono" style="color:var(--blue)">${fmtM(t.newBudget)}</td>
+        </tr>`).join('')}
+      </tbody>
+    </table></div>
+  </div>
+  <div class="card">
+    <div class="card-t">Cuotas de Mercado por Segmento</div>
+    ${segsHTML||'<div class="muted small">Sin datos</div>'}
+  </div>`;
+}
+
+// ── TEAM JOIN ─────────────────────────────────────────────────────────────
+function showTeamJoin(prefill){
+  go('tJoin',`
+  <div class="page-sm">
+    <button class="btn btn-g btn-sm mb3" id="btnBack">← Volver</button>
+    <h2>Unirse al Juego</h2>
+    <div class="muted small mt2 mb3">Ingresá el código que te dio tu docente.</div>
+    <div class="card">
+      <div class="fg">
+        <label>Código de Juego</label>
+        <input id="inGame" class="fc" maxlength="6" placeholder="ej: A3BX7Q" style="font-family:var(--f1);font-size:22px;letter-spacing:.18em;text-transform:uppercase" value="${prefill?.gameId||''}">
+      </div>
+      <div class="fg">
+        <label>Código de Equipo</label>
+        <select id="inTeam" class="fc">
+          ${TC.map(c=>`<option value="${c}">${c}</option>`).join('')}
+        </select>
+      </div>
+      <div class="fg" id="pinRow" style="display:none">
+        <label>PIN del Docente (para ver panel de control)</label>
+        <input id="inPin" class="fc" type="text" inputmode="numeric" maxlength="4" placeholder="4 dígitos" style="font-family:var(--f1);font-size:20px;letter-spacing:.2em;max-width:120px">
+      </div>
+      <div class="row g3 mt3 mb3">
+        <input type="checkbox" id="chkTeacher" style="width:16px;height:16px;accent-color:var(--acc)">
+        <label for="chkTeacher" style="font-size:13px;cursor:pointer">Soy el/la docente (acceso al panel de control)</label>
+      </div>
+      <button class="btn btn-p btn-block btn-lg" id="btnJoin">Ingresar al Juego</button>
+    </div>
+  </div>`);
+
+  $('btnBack').onclick=()=>showSplash();
+  $('inGame').oninput=()=>{$('inGame').value=$('inGame').value.toUpperCase()};
+  $('chkTeacher').onchange=()=>{$('pinRow').style.display=$('chkTeacher').checked?'':'none'};
+
+  if(prefill?.teamCode){
+    const sel=$('inTeam');
+    if(sel)sel.value=prefill.teamCode;
+  }
+
+  $('btnJoin').onclick=async()=>{
+    const gameId=$('inGame').value.trim().toUpperCase();
+    const teamCode=$('inTeam').value;
+    const isTeacher=$('chkTeacher').checked;
+    const pin=$('inPin')?.value.trim()||'';
+
+    if(gameId.length<3){toast('Ingresá el código de juego','e');return;}
+
+    const btn=$('btnJoin');
+    btn.disabled=true;btn.innerHTML='<span class="spin"></span> Ingresando…';
+
+    try{
+      const snap=await G.db.doc(`games/${gameId}`).get();
+      if(!snap.exists){toast('Juego no encontrado. Verificá el código.','e');btn.disabled=false;btn.textContent='Ingresar al Juego';return;}
+      const gd=snap.data();
+      if(!gd.teams[teamCode]&&!isTeacher){toast(`El equipo ${teamCode} no existe en este juego.`,'e');btn.disabled=false;btn.textContent='Ingresar al Juego';return;}
+      if(isTeacher&&gd.teacherPin!==pin){toast('PIN incorrecto.','e');btn.disabled=false;btn.textContent='Ingresar al Juego';return;}
+      if(gd.status==='ended'){toast('Este juego ya terminó.','e');btn.disabled=false;btn.textContent='Ingresar al Juego';return;}
+
+      G.gameId=gameId; G.gameData=gd;
+      G.role=isTeacher?'teacher':'team';
+      G.teamCode=teamCode; G.teacherPin=isTeacher?pin:null;
+      saveLocal();
+
+      if(isTeacher){
+        if(gd.status==='lobby') showTeacherLobby();
+        else if(gd.status==='active') showTeacherControl();
+        else if(gd.status==='results') showTeacherResults();
+        else showGameEnded();
+      } else {
+        if(gd.status==='lobby') showTeamLobby();
+        else if(gd.status==='active') await checkMySubmission();
+        else if(gd.status==='results') await loadAndShowTeamResults();
+        else showGameEnded();
+      }
+    }catch(e){
+      toast('Error: '+e.message,'e');
+      btn.disabled=false;btn.textContent='Ingresar al Juego';
+    }
+  };
+}
+
+// ── TEAM LOBBY (waiting for game to start) ────────────────────────────────
+function showTeamLobby(){
+  const team=G.gameData.teams[G.teamCode];
+  go('tLobby2',`
+  <div class="page-sm tc">
+    <div style="font-size:48px;margin-bottom:12px">⏳</div>
+    <h2>Esperando al Docente</h2>
+    <div class="muted small mt2">El juego aún no comenzó.</div>
+    <div class="card mt4">
+      <div class="row g3 mb2">
+        ${brandDot(team.brandKey,14)}
+        <div>
+          <div style="font-weight:700">${G.teamCode} — ${team.name}</div>
+          <div class="small muted">${team.brandKey} · ${G.gameId}</div>
+        </div>
+      </div>
+      <div class="sep"></div>
+      <div class="muted small">Presupuesto inicial: <strong>${fmtM(INIT_BUD)}</strong></div>
+    </div>
+    <div class="dots"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>
+    <div class="small muted">Esperando que el docente inicie la partida…</div>
+  </div>`);
+  G.subs.push(gDoc().onSnapshot(snap=>{
+    if(!snap.exists)return;
+    G.gameData=snap.data();
+    if(G.gameData.status==='active') checkMySubmission();
+    else if(G.gameData.status==='ended') showGameEnded();
+  }));
+}
+
+// ── CHECK MY SUBMISSION ───────────────────────────────────────────────────
+async function checkMySubmission(){
+  const r=G.gameData.currentRound;
+  try{
+    const snap=await dDoc(G.teamCode,r).get();
+    if(snap.exists){G.myDecision=snap.data();showTeamWaiting();}
+    else{G.myDecision=null;showTeamDecision();}
+  }catch(e){showTeamDecision();}
+}
+
+// ── TEAM DECISION ─────────────────────────────────────────────────────────
+function showTeamDecision(){
+  const team=G.gameData.teams[G.teamCode];
+  const budget=team.budget||INIT_BUD;
+  const r=G.gameData.currentRound;
+
+  go('tDec',`
+  <div class="page" style="padding-bottom:80px">
+    <div class="row g3 mb3" style="flex-wrap:wrap">
+      <div>
+        <div class="small muted mb1">${brandDot(team.brandKey)} ${team.brandKey} · Equipo ${G.teamCode}</div>
+        <h2>Decisiones — Ronda ${r} <span class="muted" style="font-size:16px">/ ${G.gameData.totalRounds}</span></h2>
+      </div>
+    </div>
+
+    <!-- Budget bar -->
+    <div class="bget" id="bgetBar">
+      <div class="bget-row">
+        <div>
+          <div class="small muted">Presupuesto Gastado</div>
+          <div class="bget-spent" id="bgetSpent">$0</div>
+        </div>
+        <div class="tr">
+          <div class="small muted">Disponible</div>
+          <div class="num-sm" id="bgetLeft">${fmtM(budget)}</div>
+        </div>
+        <div class="tr">
+          <div class="small muted">Total</div>
+          <div class="bget-total">${fmtM(budget)}</div>
+        </div>
+      </div>
+      <div class="prog"><div class="prog-f" id="bgetProg" style="width:0%;background:var(--grn)"></div></div>
+    </div>
+
+    <!-- Portafolio de marca -->
+    <div class="card mb3">
+      <div class="card-t">Portafolio ${team.brandKey}</div>
+      <div class="muted small mb3">Elegí en qué segmentos vas a competir esta ronda con tus modelos.</div>
+      <div class="chips" id="segChips">
+        ${SK.map(sk=>{
+          const s=MKT.segs[sk];
+          const models=(BRAND_PORTFOLIO[team.brandKey]||{})[sk]||[];
+          const avail=models.length>0;
+          return avail
+            ?`<div class="chip" data-sk="${sk}" id="chip_${sk}">
+                <span>${s.icon}</span>
+                <div><div style="font-weight:600">${s.name}</div><div class="small muted">${models.join(' · ')}</div></div>
+                <div class="small muted" style="margin-left:auto;padding-left:8px">ref $${(s.ref/1000).toFixed(0)}K</div>
+              </div>`
+            :`<div class="chip disabled" style="opacity:.35;cursor:not-allowed;pointer-events:none" title="${team.brandKey} no tiene modelos en este segmento">
+                <span>${s.icon}</span>
+                <div><div style="font-weight:600;color:var(--txt3)">${s.name}</div><div class="small" style="color:var(--txt3)">Sin modelos</div></div>
+              </div>`;
+        }).join('')}
+      </div>
+    </div>
+
+    <!-- Precios -->
+    <div class="card mb3" id="priceCard">
+      <div class="card-t">Precio por Segmento (USD)</div>
+      <div id="priceInputs"><div class="muted small">Seleccioná al menos un segmento.</div></div>
+    </div>
+
+    <!-- Inversiones clásicas -->
+    <div class="card mb3">
+      <div class="card-t">Inversiones en Marketing</div>
+      <div class="muted small mb3">Distribuí el presupuesto entre las áreas.</div>
+      ${['advertising','distribution','rd'].map(k=>{
+        const labels={advertising:'📢 Publicidad (Share of Voice)',distribution:'🏪 Distribución',rd:'🔬 Investigación & Desarrollo'};
+        return `<div class="sl-row">
+          <div style="min-width:190px;font-size:13px;font-weight:500">${labels[k]}</div>
+          <input type="range" id="sl_${k}" min="0" max="${budget}" step="10000" value="0">
+          <div class="sl-val" id="sv_${k}">$0</div>
+        </div>`;
+      }).join('')}
+      <div class="hint mt2">Publicidad: SOV (raíz cuadrada). Distribución: alcance de red. I+D: calidad percibida del producto.</div>
+    </div>
+
+    <!-- Mix de medios -->
+    <div class="card mb3">
+      <div class="card-t">📺 Mix de Medios</div>
+      <div class="muted small mb3">¿Cómo distribuís el presupuesto de publicidad entre canales? (debe sumar 100%)</div>
+      ${[['tv','📡 TV Abierta'],['digital','📱 Digital'],['pdv','🏪 Punto de Venta'],['spon','🏆 Sponsoring']].map(([k,lbl])=>`
+        <div class="sl-row">
+          <div style="min-width:160px;font-size:13px;font-weight:500">${lbl}</div>
+          <input type="range" id="mix_${k}" min="0" max="100" step="5" value="25">
+          <div class="sl-val" id="mv_${k}">25%</div>
+        </div>`).join('')}
+      <div class="row g2 mt2" style="align-items:center">
+        <div class="flex1 small muted">Total mix:</div>
+        <div id="mixTotal" class="num-sm" style="color:var(--grn)">100%</div>
+      </div>
+      <div class="hint mt1">TV funciona mejor en SUVs y Pickups. Digital es más eficaz en Compactos y Sedanes.</div>
+    </div>
+
+    <!-- Financiamiento -->
+    <div class="card mb3">
+      <div class="card-t">💳 Financiamiento</div>
+      <div class="muted small mb3">Invertí en subsidiar tasas de interés para facilitar la compra a crédito. Especialmente efectivo en segmentos de menor ticket.</div>
+      <div class="sl-row">
+        <div style="min-width:190px;font-size:13px;font-weight:500">Subsidio financiero</div>
+        <input type="range" id="sl_financingBudget" min="0" max="${FIN_CAP}" step="10000" value="0">
+        <div class="sl-val" id="sv_financingBudget">$0</div>
+      </div>
+      <div class="hint mt1">Máx. recomendado: ${fmtM(FIN_CAP)}. Mayor impacto en Compactos y Sedanes.</div>
+    </div>
+
+    <!-- Precio de intercambio -->
+    <div class="card mb3">
+      <div class="card-t">🔄 Precio de Intercambio (Trade-in)</div>
+      <div class="muted small mb3">Ofrecé mayor valor por el usado del cliente para reducir la barrera de compra del 0km.</div>
+      <div class="sl-row">
+        <div style="min-width:190px;font-size:13px;font-weight:500">Bono de intercambio</div>
+        <input type="range" id="sl_tradeInBudget" min="0" max="${TRADEIN_CAP}" step="10000" value="0">
+        <div class="sl-val" id="sv_tradeInBudget">$0</div>
+      </div>
+      <div class="hint mt1">Equivale a una reducción de precio percibido sin bajar el precio lista.</div>
+    </div>
+
+    <!-- Garantía y postventa -->
+    <div class="card mb3">
+      <div class="card-t">🛡️ Garantía & Servicio Postventa</div>
+      <div class="muted small mb3">El nivel de garantía construye imagen de marca a lo largo de las rondas (efecto acumulativo).</div>
+      <div class="row g2" style="flex-wrap:wrap" id="warrantyOpts">
+        ${[['basic','Básica','1 año','$50K'],['standard','Estándar','3 años','$150K'],['premium','Premium','5 años','$300K'],['extended','Extendida','7 años','$500K']].map(([k,nm,yr,cost],i)=>`
+          <div class="wcard ${i===0?'on':''}" data-wk="${k}" id="wc_${k}" style="flex:1;min-width:120px;padding:10px;background:var(--card2);border:2px solid ${i===0?'var(--acc)':'var(--bdr)'};border-radius:var(--r);cursor:pointer;text-align:center">
+            <div style="font-size:12px;font-weight:700">${nm}</div>
+            <div class="small muted">${yr}</div>
+            <div style="font-family:var(--f1);font-size:13px;color:var(--acc);margin-top:3px">${cost}</div>
+          </div>`).join('')}
+      </div>
+      <div class="hint mt2">El efecto sobre la imagen de marca se acumula ronda a ronda.</div>
+    </div>
+
+    <button class="btn btn-p btn-block btn-lg" id="btnSubmit">Enviar Decisiones →</button>
+  </div>`);
+
+  const portfolio=new Set();
+  const prices={};
+  const inv={advertising:0,distribution:0,rd:0,financingBudget:0,tradeInBudget:0};
+  let warrantyLevel='basic';
+
+  function warrantyRoundCost(){return WARRANTY_COSTS[warrantyLevel]||WARRANTY_COSTS.basic;}
+  function getSpent(){return Object.values(inv).reduce((s,v)=>s+v,0)+warrantyRoundCost();}
+  function updateBudget(){
+    const sp=getSpent();
+    const pct=Math.min(1,sp/budget);
+    const over=sp>budget;
+    $('bgetSpent').textContent=fmtM(sp);
+    $('bgetLeft').textContent=fmtM(Math.max(0,budget-sp));
+    $('bgetProg').style.width=(pct*100).toFixed(1)+'%';
+    $('bgetProg').style.background=over?'var(--red)':sp/budget>0.8?'var(--acc)':'var(--grn)';
+    $('bgetBar').classList.toggle('over',over);
+    $('btnSubmit').disabled=over;
+  }
+
+  // Mix de medios
+  function getMix(){
+    const keys=['tv','digital','pdv','spon'];
+    const raw=Object.fromEntries(keys.map(k=>[k,parseInt($('mix_'+k).value)||0]));
+    const tot=Object.values(raw).reduce((s,v)=>s+v,0)||100;
+    const el=$('mixTotal');
+    el.textContent=tot+'%';
+    el.style.color=Math.abs(tot-100)<=1?'var(--grn)':'var(--red)';
+    return raw;
+  }
+  ['tv','digital','pdv','spon'].forEach(k=>{
+    $('mix_'+k).oninput=()=>{$('mv_'+k).value||null;$('mv_'+k).textContent=($('mix_'+k).value)+'%';getMix();};
+  });
+
+  // Warranty cards
+  document.querySelectorAll('.wcard').forEach(card=>{
+    card.onclick=()=>{
+      warrantyLevel=card.dataset.wk;
+      document.querySelectorAll('.wcard').forEach(c=>{
+        c.style.borderColor=c===card?'var(--acc)':'var(--bdr)';
+        c.classList.toggle('on',c===card);
+      });
+      updateBudget();
+    };
+  });
+
+  function updatePrices(){
+    const el=$('priceInputs');
+    if(!el)return;
+    if(portfolio.size===0){el.innerHTML='<div class="muted small">Seleccioná al menos un segmento.</div>';return;}
+    const brandMods=BRAND_PORTFOLIO[G.gameData.teams[G.teamCode]?.brandKey]||{};
+    el.innerHTML=[...portfolio].map(sk=>{
+      const s=MKT.segs[sk];
+      const cur=prices[sk]||s.ref;
+      const mn=Math.round(s.ref*0.5/500)*500;
+      const mx=Math.round(s.ref*1.5/500)*500;
+      const models=(brandMods[sk]||[]).join(', ');
+      return `<div class="pr-row">
+        <span class="pr-icon">${s.icon}</span>
+        <div class="pr-seg">${s.name}${models?`<div class="pr-ref" style="color:var(--acc);font-weight:600">${models}</div>`:''}
+          <div class="pr-ref">Ref: $${fmt(s.ref)} · Rango: $${fmt(mn)}–$${fmt(mx)}</div></div>
+        <input class="fc pr-in" type="number" id="pr_${sk}" min="${mn}" max="${mx}" step="500" value="${cur}">
+      </div>`;
+    }).join('');
+    portfolio.forEach(sk=>{
+      $('pr_'+sk).onchange=()=>{
+        const s=MKT.segs[sk];
+        const mn=Math.round(s.ref*0.5/500)*500;
+        const mx=Math.round(s.ref*1.5/500)*500;
+        prices[sk]=Math.min(mx,Math.max(mn,parseInt($('pr_'+sk).value)||s.ref));
+        $('pr_'+sk).value=prices[sk];
+      };
+    });
+  }
+
+  // Chip clicks
+  document.querySelectorAll('.chip').forEach(chip=>{
+    chip.onclick=()=>{
+      const sk=chip.dataset.sk;
+      if(portfolio.has(sk)){portfolio.delete(sk);chip.classList.remove('on');}
+      else{portfolio.add(sk);chip.classList.add('on');}
+      updatePrices();
+    };
+  });
+
+  // Slider events (classic + new budget sliders)
+  ['advertising','distribution','rd','financingBudget','tradeInBudget'].forEach(k=>{
+    const el=$('sl_'+k);
+    if(!el)return;
+    el.oninput=()=>{
+      inv[k]=parseInt(el.value);
+      $('sv_'+k).textContent=fmtM(inv[k]);
+      updateBudget();
+    };
+  });
+
+  // Monitor game state
+  G.subs.push(gDoc().onSnapshot(snap=>{
+    if(!snap.exists)return;
+    G.gameData=snap.data();
+    if(G.gameData.status==='results') loadAndShowTeamResults();
+    else if(G.gameData.status==='ended') showGameEnded();
+  }));
+
+  $('btnSubmit').onclick=async()=>{
+    if(portfolio.size===0){toast('Seleccioná al menos un segmento.','e');return;}
+    const sp=getSpent();
+    if(sp>budget){toast('Gastás más que tu presupuesto.','e');return;}
+    // collect prices
+    portfolio.forEach(sk=>{
+      const s=MKT.segs[sk];
+      const mn=Math.round(s.ref*0.5/500)*500;
+      const mx=Math.round(s.ref*1.5/500)*500;
+      prices[sk]=Math.min(mx,Math.max(mn,parseInt($('pr_'+sk)?.value)||s.ref));
+    });
+    const btn=$('btnSubmit');
+    btn.disabled=true;btn.innerHTML='<span class="spin"></span> Enviando…';
+    try{
+      // Normalize media mix to sum 100
+      const rawMix=getMix();
+      const mixTot=Object.values(rawMix).reduce((s,v)=>s+v,0)||100;
+      const mediaMix={tv:Math.round(rawMix.tv/mixTot*100),digital:Math.round(rawMix.digital/mixTot*100),pdv:Math.round(rawMix.pdv/mixTot*100),spon:0};
+      mediaMix.spon=100-mediaMix.tv-mediaMix.digital-mediaMix.pdv;
+      const dec={
+        gameId:G.gameId, roundKey:`${G.gameId}-r${r}`, round:r, teamCode:G.teamCode,
+        brandKey:G.gameData.teams[G.teamCode].brandKey,
+        portfolio:[...portfolio], pricing:{...prices},
+        advertising:inv.advertising, distribution:inv.distribution, rd:inv.rd,
+        financingBudget:inv.financingBudget, tradeInBudget:inv.tradeInBudget,
+        warrantyLevel, warrantyCost:WARRANTY_COSTS[warrantyLevel],
+        mediaMix,
+        totalSpent:sp, submittedAt:new Date().toISOString(),
+      };
+      await dDoc(G.teamCode,r).set(dec);
+      // Also update submittedRound on game doc (best-effort)
+      await gDoc().update({[`teams.${G.teamCode}.submittedRound`]:r}).catch(()=>{});
+      G.myDecision=dec;
+      showTeamWaiting();
+    }catch(e){
+      toast('Error al enviar: '+e.message,'e');
+      btn.disabled=false;btn.innerHTML='Enviar Decisiones →';
+    }
+  };
+}
+
+// ── TEAM WAITING ──────────────────────────────────────────────────────────
+function showTeamWaiting(){
+  const r=G.gameData.currentRound;
+  const d=G.myDecision;
+  go('tWait',`
+  <div class="page-sm tc">
+    <div style="font-size:48px;margin-bottom:12px">✅</div>
+    <h2>¡Decisiones Enviadas!</h2>
+    <div class="muted small mt2">Ronda ${r} — Esperando que el docente cierre la ronda.</div>
+    ${d?`
+    <div class="card mt4" style="text-align:left">
+      <div class="card-t">Tu Propuesta</div>
+      <div class="row g3 mb2 flex-wrap">${(d.portfolio||[]).map(sk=>`<span class="bdg bdg-a">${MKT.segs[sk]?.icon} ${MKT.segs[sk]?.name}</span>`).join('')}</div>
+      <div class="sep"></div>
+      ${[['advertising','📢 Publicidad'],['distribution','🏪 Distribución'],['rd','🔬 I+D'],['financingBudget','💳 Financiamiento'],['tradeInBudget','🔄 Trade-in']].map(([k,lbl])=>`
+        <div class="row g3 mb1">
+          <div class="flex1 small">${lbl}</div>
+          <div class="mono small">${fmtM(d[k]||0)}</div>
+        </div>`).join('')}
+      <div class="row g3 mb1">
+        <div class="flex1 small">🛡️ Garantía</div>
+        <div class="mono small">${d.warrantyLevel||'basic'} · ${fmtM(d.warrantyCost||WARRANTY_COSTS.basic)}</div>
+      </div>
+      ${d.mediaMix?`<div class="row g3 mb1"><div class="flex1 small">📺 Mix</div><div class="mono small">TV${d.mediaMix.tv}% Dig${d.mediaMix.digital}% PDV${d.mediaMix.pdv}% Sp${d.mediaMix.spon}%</div></div>`:''}
+      <div class="sep"></div>
+      <div class="row g3"><div class="flex1 small muted">Total gastado</div><div class="num-sm">${fmtM(d.totalSpent||0)}</div></div>
+    </div>`:''}
+    <div class="card mt4">
+      <div class="card-t">Equipos que Enviaron</div>
+      <div id="waitTeams"><div class="muted small">Cargando…</div></div>
+    </div>
+    <div class="dots mt3"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>
+  </div>`);
+
+  G.subs.push(dQuery(r).onSnapshot(snap=>{
+    const submitted=new Set();
+    snap.docs.forEach(d=>submitted.add(d.data().teamCode));
+    const el=$('waitTeams');
+    if(!el)return;
+    el.innerHTML=Object.entries(G.gameData.teams).map(([tc,team])=>`
+      <div class="row g3" style="padding:8px 0;border-bottom:1px solid var(--bdr)">
+        ${brandDot(team.brandKey)}
+        <div class="flex1 small" style="font-weight:${tc===G.teamCode?'700':'400'}">${tc}${tc===G.teamCode?' (tú)':''}</div>
+        ${submitted.has(tc)?'<span class="bdg bdg-g">✓</span>':'<span class="bdg bdg-m">⏳</span>'}
+      </div>`).join('')+'<div style="height:4px"></div>';
+  },()=>{}));
+
+  G.subs.push(gDoc().onSnapshot(snap=>{
+    if(!snap.exists)return;
+    G.gameData=snap.data();
+    if(G.gameData.status==='results') loadAndShowTeamResults();
+    else if(G.gameData.status==='active'&&G.gameData.currentRound>r) checkMySubmission();
+    else if(G.gameData.status==='ended') showGameEnded();
+  }));
+}
+
+// ── TEAM RESULTS ──────────────────────────────────────────────────────────
+async function loadAndShowTeamResults(){
+  const r=G.gameData.currentRound;
+  try{
+    const snap=await rDoc(r).get();
+    if(snap.exists){G.roundResults=snap.data();showTeamResults();}
+    else{
+      // poll briefly
+      setTimeout(async()=>{
+        const s2=await rDoc(r).get().catch(()=>({exists:false}));
+        if(s2.exists){G.roundResults=s2.data();showTeamResults();}
+      },3000);
+    }
+  }catch(e){showTeamResults();}
+}
+
+function showTeamResults(){
+  const r=G.gameData.currentRound;
+  const res=G.roundResults;
+  const myT=res?.teams?.[G.teamCode];
+  const team=G.gameData.teams[G.teamCode];
+
+  go('tRes2',`
+  <div class="page">
+    <div class="row g3 mb4">
+      <div class="flex1">
+        <div class="small muted mb1">${brandDot(team.brandKey)} ${team.brandKey} · ${G.teamCode}</div>
+        <h2>Resultados — Ronda ${r}</h2>
+      </div>
+    </div>
+    ${myT?`
+    <div class="kpi-g mb3">
+      <div class="kpi hi"><div class="num">${fmt(myT.units)}</div><div class="lbl">Unidades Vendidas</div></div>
+      <div class="kpi"><div class="num">${fmtM(myT.revenue)}</div><div class="lbl">Ingreso Total</div></div>
+      <div class="kpi ${myT.net>=0?'':''}"><div class="num" style="color:${myT.net>=0?'var(--grn)':'var(--red)'}">${myT.net>=0?'+':''}${fmtM(myT.net)}</div><div class="lbl">Resultado Neto</div></div>
+      <div class="kpi"><div class="num" style="color:var(--blue)">${fmtM(myT.newBudget)}</div><div class="lbl">Tu Presupuesto Ronda ${r+1}</div></div>
+    </div>
+    <div class="card mb3">
+      <div class="card-t">Tus Segmentos</div>
+      ${Object.entries(myT.segs||{}).length>0?`
+      <div class="tw"><table>
+        <thead><tr><th>Segmento</th><th class="tr">Unidades</th><th class="tr">Cuota</th><th class="tr">Ingreso</th></tr></thead>
+        <tbody>
+          ${Object.entries(myT.segs).map(([sk,s])=>`
+          <tr>
+            <td>${MKT.segs[sk]?.icon||''} ${MKT.segs[sk]?.name||sk}</td>
+            <td class="tr mono">${fmt(s.units)}</td>
+            <td class="tr mono">${fmtP(s.ms)}</td>
+            <td class="tr mono">${fmtM(s.revenue)}</td>
+          </tr>`).join('')}
+        </tbody>
+      </table></div>`:'<div class="muted small">Sin ventas esta ronda.</div>'}
+    </div>`:'<div class="card mb3"><div class="muted small tc">Sin resultados disponibles.</div></div>'}
+    ${res?renderResultsHTML(res,false):''}
+  </div>`);
+
+  G.subs.push(gDoc().onSnapshot(snap=>{
+    if(!snap.exists)return;
+    G.gameData=snap.data();
+    const newR=G.gameData.currentRound;
+    if(G.gameData.status==='active'&&newR>r) checkMySubmission();
+    else if(G.gameData.status==='ended') showGameEnded();
+  }));
+}
+
+// ── GAME ENDED ────────────────────────────────────────────────────────────
+async function showGameEnded(){
+  // Load all round results to compute cumulative
+  const {totalRounds,teams}=G.gameData;
+  const cumNet={};
+  Object.keys(teams).forEach(tc=>{cumNet[tc]=0;});
+  for(let r=1;r<=totalRounds;r++){
+    try{
+      const snap=await rDoc(r).get();
+      if(snap.exists){
+        const res=snap.data();
+        Object.entries(res.teams).forEach(([tc,t])=>{if(cumNet[tc]!==undefined)cumNet[tc]+=t.net;});
+      }
+    }catch(e){}
+  }
+  const sorted=Object.entries(cumNet).sort((a,b)=>b[1]-a[1]);
+
+  go('gEnd',`
+  <div class="page tc">
+    <div style="font-size:64px;margin-bottom:16px">🏁</div>
+    <h2 style="font-size:clamp(28px,7vw,42px);font-family:var(--f1);font-weight:900">Juego Finalizado</h2>
+    <div class="muted mt2 mb4">AutoSim UY · ${G.gameId} · ${totalRounds} rondas</div>
+    <div class="card" style="text-align:left">
+      <div class="card-t tc">Ranking Final — Resultado Neto Acumulado</div>
+      <div class="tw"><table>
+        <thead><tr><th>#</th><th>Equipo</th><th>Marca</th><th class="tr">Resultado Neto Total</th></tr></thead>
+        <tbody>
+        ${sorted.map(([tc,net],i)=>`
+          <tr style="${i===0?'background:rgba(240,128,32,.08)':''}">
+            <td style="font-family:var(--f1);font-size:22px;font-weight:900;color:${i===0?'var(--yel)':i===1?'var(--txt2)':i===2?'var(--acc)':'var(--txt3)'}">${i===0?'🥇':i===1?'🥈':i===2?'🥉':i+1}</td>
+            <td><div class="row g2">${brandDot(teams[tc]?.brandKey||'')}<strong>${tc}</strong> <span class="small muted">${teams[tc]?.name||''}</span></div></td>
+            <td class="small">${teams[tc]?.brandKey||''}</td>
+            <td class="tr mono" style="font-family:var(--f1);font-size:17px;font-weight:700;color:${net>=0?'var(--grn)':'var(--red)'}">${net>=0?'+':''}${fmtM(net)}</td>
+          </tr>`).join('')}
+        </tbody>
+      </table></div>
+    </div>
+    <div class="card mt3" style="background:var(--acc-dim);border-color:rgba(240,128,32,.3)">
+      <div style="font-family:var(--f1);font-size:16px;font-weight:700;color:var(--acc);margin-bottom:8px">🏆 GANADOR</div>
+      <div style="font-family:var(--f1);font-size:clamp(26px,6vw,38px);font-weight:900">${sorted[0]?.[0]||'—'}</div>
+      <div class="small muted mt1">${teams[sorted[0]?.[0]]?.name||''} · ${teams[sorted[0]?.[0]]?.brandKey||''}</div>
+    </div>
+    <button class="btn btn-g mt4" onclick="showSplash()">Volver al Inicio</button>
+  </div>`);
+}
+
+// ── INIT ──────────────────────────────────────────────────────────────────
+async function init(){
+  $('app').innerHTML=`
+  <div class="splash">
+    <div style="font-size:52px;margin-bottom:16px">🏎️</div>
+    <div class="logo-name">Auto<span>Sim</span> UY</div>
+    <div class="dots mt4"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>
+    <div class="small muted mt2">Cargando…</div>
+  </div>`;
+
+  // ── Inicializar Firebase ───────────────────────────────────────────────
+  const configMissing = FIREBASE_CONFIG.apiKey === 'TU_API_KEY';
+  if(configMissing){
+    $('app').innerHTML=`
+    <div class="splash">
+      <div style="font-size:48px">🔧</div>
+      <h2 class="mt3">Configurar Firebase</h2>
+      <div class="muted mt2 small" style="max-width:400px;text-align:left">
+        <p style="margin-bottom:12px">Para usar AutoSim UY en modo standalone necesitás configurar Firebase:</p>
+        <ol style="padding-left:20px;line-height:2">
+          <li>Creá un proyecto en <a href="https://console.firebase.google.com" target="_blank">console.firebase.google.com</a></li>
+          <li>Activá <strong>Firestore Database</strong> (modo prueba)</li>
+          <li>En <em>Configuración → Aplicaciones web</em>, copiá tu <code>firebaseConfig</code></li>
+          <li>Pegá los valores en el bloque <code>FIREBASE_CONFIG</code> al principio del HTML</li>
+        </ol>
+      </div>
+    </div>`;
+    return;
+  }
+  try{
+    if(!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
+    G.db = firebase.firestore();
+  }catch(e){
+    $('app').innerHTML=`<div class="splash"><div style="font-size:48px">⚠️</div><h2 class="mt3">Error de Firebase</h2><div class="muted mt2 small">${e.message}</div></div>`;
+    return;
+  }
+
+  // Hash-based direct role routing (#teacher or #student)
+  const hash=location.hash.toLowerCase();
+  if(hash==='#teacher'){showTeacherSetup();return;}
+  if(hash==='#student'){showTeamJoin();return;}
+
+  // Try to restore session
+  const saved=loadLocal();
+  if(saved?.gameId&&saved?.role){
+    try{
+      const snap=await G.db.doc(`games/${saved.gameId}`).get();
+      if(snap.exists){
+        const gd=snap.data();
+        if(gd.status!=='ended'||(gd.status==='ended')){
+          G.gameId=saved.gameId; G.role=saved.role;
+          G.teamCode=saved.teamCode; G.teacherPin=saved.teacherPin;
+          G.gameData=gd;
+          if(gd.status==='ended'){showGameEnded();return;}
+          if(saved.role==='teacher'){
+            if(gd.status==='lobby') showTeacherLobby();
+            else if(gd.status==='active') showTeacherControl();
+            else if(gd.status==='results') showTeacherResults();
+            return;
+          } else {
+            if(gd.teams[saved.teamCode]){
+              if(gd.status==='lobby') showTeamLobby();
+              else if(gd.status==='active') await checkMySubmission();
+              else if(gd.status==='results') await loadAndShowTeamResults();
+              return;
+            }
+          }
+        }
+      }
+    }catch(e){}
+  }
+  showSplash();
+}
+
+init();
+</script>
+</body>
+</html>
