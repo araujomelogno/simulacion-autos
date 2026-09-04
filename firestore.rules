@@ -1,0 +1,38 @@
+rules_version = '2';
+
+// Reglas de seguridad de Firestore para AutoSim UY.
+//
+// El juego no tiene cuentas de usuario: docentes y equipos entran con un
+// código de juego y un PIN, y la app se autentica de forma anónima
+// (firebase.auth().signInAnonymously()). Por eso las reglas exigen una
+// sesión autenticada y limitan el acceso a las tres colecciones que usa
+// la app, en lugar de abrir la base entera.
+//
+// Para aplicarlas:  firebase deploy --only firestore:rules
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Partidas: games/{codigoDeJuego}
+    match /games/{gameId} {
+      allow read, create, update: if request.auth != null;
+      allow delete: if false;
+    }
+
+    // Decisiones por equipo y ronda: decisions/{gameId}-r{ronda}-{equipo}
+    match /decisions/{decisionId} {
+      allow read, create, update: if request.auth != null;
+      allow delete: if false;
+    }
+
+    // Resultados calculados por ronda: results/{gameId}-r{ronda}
+    match /results/{resultId} {
+      allow read, create, update: if request.auth != null;
+      allow delete: if false;
+    }
+
+    // Todo lo demás queda cerrado.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
