@@ -10,6 +10,7 @@
 <!-- Firebase (compat v9) -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <style>
 :root{
   --bg:#0E1521;--surf:#162032;--card:#1C2B3D;--card2:#223248;
@@ -592,7 +593,9 @@ function showTeacherSetup(){
       saveLocal();
       showTeacherLobby();
     }catch(e){
-      toast('Error al crear juego: '+e.message,'e');
+      toast('Error al crear juego: '+(e.code==='permission-denied'
+        ?'las reglas de Firestore están bloqueando la escritura. Publicá firestore.rules (firebase deploy --only firestore:rules).'
+        :e.message),'e');
       btn.disabled=false;btn.textContent='Crear Juego';
     }
   };
@@ -1494,6 +1497,30 @@ async function init(){
     G.db = firebase.firestore();
   }catch(e){
     $('app').innerHTML=`<div class="splash"><div style="font-size:48px">⚠️</div><h2 class="mt3">Error de Firebase</h2><div class="muted mt2 small">${e.message}</div></div>`;
+    return;
+  }
+
+  // Las reglas de Firestore exigen una sesión autenticada, así que entramos
+  // de forma anónima antes de leer o escribir. Sin esto, cualquier operación
+  // falla con "Missing or insufficient permissions".
+  try{
+    if(!firebase.auth().currentUser) await firebase.auth().signInAnonymously();
+  }catch(e){
+    const needsProvider = e.code==='auth/operation-not-allowed'||e.code==='auth/admin-restricted-operation';
+    $('app').innerHTML=`
+    <div class="splash">
+      <div style="font-size:48px">🔐</div>
+      <h2 class="mt3">No se pudo iniciar sesión</h2>
+      <div class="muted mt2 small" style="max-width:420px;text-align:left">
+        ${needsProvider?`<p style="margin-bottom:12px">Falta habilitar el acceso anónimo en Firebase:</p>
+        <ol style="padding-left:20px;line-height:2">
+          <li>Abrí <a href="https://console.firebase.google.com/project/${FIREBASE_CONFIG.projectId}/authentication/providers" target="_blank">Authentication → Sign-in method</a></li>
+          <li>Habilitá el proveedor <strong>Anónimo</strong></li>
+          <li>Volvé a cargar esta página</li>
+        </ol>`:`<p>${e.message}</p>`}
+      </div>
+      <button class="btn btn-g mt4" onclick="location.reload()">Reintentar</button>
+    </div>`;
     return;
   }
 
